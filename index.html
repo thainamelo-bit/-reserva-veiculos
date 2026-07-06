@@ -305,7 +305,7 @@ const SEED = {
   ]
 };
 
-let curYear=2026, curMonth=5, cache={}, seeded=false;
+let today0=new Date(); let curYear=today0.getFullYear(), curMonth=today0.getMonth(), cache={}, seeded=false;
 let modalState = {vid:null, key:null, d:null, showForm:false, editingId:null};
 
 async function api(path, opts={}) {
