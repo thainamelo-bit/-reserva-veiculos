@@ -23,7 +23,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .legend-dot{width:8px;height:8px;border-radius:50%}
 
 /* MAIN */
-.main{max-width:980px;margin:0 auto;padding:24px 16px}
+.main{max-width:1440px;margin:0 auto;padding:28px 24px}
 .nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px}
 .month-nav{display:flex;align-items:center;gap:10px}
 .month-nav button{background:#fff;border:1px solid #E8E8E4;color:#1a1a18;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center}
@@ -31,7 +31,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .month-title{font-size:16px;font-weight:600;min-width:160px;text-align:center;letter-spacing:-.02em}
 
 /* CALENDÁRIOS */
-.cal-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cal-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
 .cal-panel{background:#fff;border:1px solid #E8E8E4;border-radius:12px;overflow:hidden}
 .cal-header{padding:12px 14px 10px;border-bottom:1px solid #F0F0EC;display:flex;align-items:center;gap:8px}
 .cal-header-dot{width:8px;height:8px;border-radius:50%}
@@ -42,11 +42,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .days{display:grid;grid-template-columns:repeat(7,1fr);padding:4px 8px 10px;gap:3px}
 
 /* DIAS */
-.day{min-height:58px;border-radius:7px;padding:4px 3px;cursor:pointer;position:relative;transition:background .12s;display:flex;flex-direction:column;align-items:center;gap:1px}
+.day{min-height:92px;border-radius:8px;padding:6px 4px;cursor:pointer;position:relative;transition:background .12s;display:flex;flex-direction:column;align-items:center;gap:2px}
 .day:hover:not(.empty){background:#F0F0EC}
 .empty{cursor:default}
 .weekend{background:#FAFAF8;cursor:pointer}
-.day-num{font-size:11px;font-weight:500;color:#aaa;line-height:1;margin-bottom:1px}
+.day-num{font-size:13px;font-weight:500;color:#aaa;line-height:1;margin-bottom:2px}
 .weekend .day-num{color:#aaa}
 .day.booked-f5{background:#F0F7E6}
 .day.booked-fortes{background:#FCEAEA}
@@ -54,10 +54,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .day.booked-fortes .day-num{color:#A32D2D;font-weight:600}
 
 /* CHIPS */
-.chip{font-size:8px;font-weight:500;border-radius:3px;padding:1px 3px;line-height:1.4;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center}
+.chip{font-size:10px;font-weight:500;border-radius:4px;padding:2px 4px;line-height:1.4;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center}
 .chip-f5{background:#C0DD97;color:#27500A}
 .chip-fortes{background:#F7C1C1;color:#791F1F}
-.chip-dest{font-size:7px;font-weight:400;color:#777;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center;line-height:1.3}
+.chip-dest{font-size:9px;font-weight:400;color:#777;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%;text-align:center;line-height:1.3}
 .chip-dest-f5{color:#3B6D11}
 .chip-dest-fortes{color:#A32D2D}
 
