@@ -157,10 +157,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .topbar{height:auto;padding:10px 14px}
   .topbar-left{gap:8px}
   .main{padding:12px 8px}
-  .day{min-height:70px;padding:4px 2px}
+  .day{min-height:88px;padding:4px 2px}
   .day-num{font-size:12px}
   .chip{font-size:10px;white-space:normal;line-height:1.25;padding:2px 3px;overflow:visible;text-overflow:clip;word-break:break-word}
-  .chip-dest{display:none}
+  .chip-dest{font-size:9px;white-space:normal;line-height:1.2;overflow:visible;text-overflow:clip;word-break:break-word}
   .legend{display:none}
   .tabs .tab{padding:5px 10px;font-size:12px}
   .horario-row{grid-template-columns:1fr}
@@ -168,8 +168,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .modal{padding:16px}
 }
 @media(max-width:400px){
-  .day{min-height:62px}
+  .day{min-height:80px}
   .chip{font-size:9px}
+  .chip-dest{font-size:8px}
 }
 </style>
 </head>
@@ -399,13 +400,12 @@ function renderCalPanel(vid, rows) {
     if(booked) cls+=' '+bookedClass;
     const numEl=isToday&&!weekend?`<div class="today-num">${d}</div>`:`<div class="day-num">${d}</div>`;
     let inner=numEl;
-    entries.slice(0,2).forEach(e=>{
+    entries.forEach(e=>{
       const primeiroNome = e.nome.split('/')[0].trim().split(' ')[0];
       const destShort = e.destino ? e.destino.split('/')[0].trim() : '';
       inner+=`<div class="chip ${chipClass}" title="${e.nome}">${primeiroNome}</div>`;
       if(destShort) inner+=`<div class="chip-dest ${destClass}" title="${e.destino}">📍${destShort}</div>`;
     });
-    if(entries.length>2) inner+=`<div style="font-size:8px;color:#aaa">+${entries.length-2}</div>`;
     if(weekend) inner+=`<div class="weekend-label">${new Date(curYear,curMonth,d).getDay()===6?'Sáb':'Dom'}</div>`;
     html+=`<div class="${cls}" onclick="openDay('${vid}','${key}',${d})">${inner}</div>`;
   }
