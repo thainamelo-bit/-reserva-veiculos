@@ -256,7 +256,20 @@ const HEADERS = {'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type'
 const MONTHS = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
 
 const USER_KEY = 'reservaf5_usuario';
-function getUsuario(){ return localStorage.getItem(USER_KEY)||''; }
+
+// Nomes "genéricos"/placeholder que NÃO devem ser tratados como identidade de uma pessoa real.
+// Isso evita que o banner mostre algo como "Cadastro inicial" (valor padrão vindo de reservas
+// antigas/importadas) e evita que essa string vire a identidade local de quem edita essas reservas.
+const PLACEHOLDER_NAMES = ['cadastro inicial','sistema','admin','n/a','nao informado','não informado',''];
+function isPlaceholderName(n){
+  if(!n) return true;
+  return PLACEHOLDER_NAMES.includes(n.trim().toLowerCase());
+}
+
+function getUsuario(){
+  const v = localStorage.getItem(USER_KEY)||'';
+  return isPlaceholderName(v) ? '' : v;
+}
 function setUsuario(n){ localStorage.setItem(USER_KEY, n); renderBanner(); }
 
 function renderBanner(){
@@ -277,8 +290,9 @@ function promptUsuario(){
   const atual=getUsuario();
   const novo=prompt('Seu nome (como vai aparecer na auditoria):', atual||'');
   if(novo===null) return;
-  if(!novo.trim()){ alert('Por favor informe um nome.'); return; }
-  setUsuario(novo.trim());
+  const nomeLimpo=novo.trim();
+  if(!nomeLimpo || isPlaceholderName(nomeLimpo)){ alert('Por favor informe um nome válido.'); return; }
+  setUsuario(nomeLimpo);
 }
 
 async function logAuditoria(acao, reserva) {
@@ -294,7 +308,7 @@ async function logAuditoria(acao, reserva) {
         obs: reserva.obs || '',
         feito_em: new Date().toISOString(),
         reserva_id: reserva.id || null,
-        feito_por: reserva._feito_por || getUsuario()
+        feito_por: reserva._feito_por || getUsuario() || 'Não identificado'
       })
     });
   } catch(e) {}
@@ -459,7 +473,7 @@ function buildModal(showForm) {
           <div class="res-dest">📍 ${e.destino}</div>
           <div class="res-horario">${formatHorario(e.horario)}</div>
           ${e.obs?`<div class="res-obs">${e.obs}</div>`:''}
-          ${e.usuario?`<div class="res-obs" style="color:#bbb">Reservado por ${e.usuario}</div>`:''}
+          ${e.usuario && !isPlaceholderName(e.usuario) ? `<div class="res-obs" style="color:#bbb">Reservado por ${e.usuario}</div>` : ''}
         </div>
         <div class="res-actions">
           <button class="res-edit" onclick="showEditForm('${e.id}')" title="Editar">✎</button>
@@ -478,7 +492,10 @@ function buildModal(showForm) {
     const vNome = editing ? editing.nome : '';
     const vDest = editing ? editing.destino : '';
     const vObs = editing ? (editing.obs||'') : '';
-    const vUsuario = editing ? (editing.usuario||usuarioAtual) : usuarioAtual;
+    // Importante: o campo "quem está fazendo isso" sempre reflete quem está usando o app
+    // agora — nunca o dono original da reserva. Isso evita que, ao editar a reserva de
+    // outra pessoa, sua identidade local seja sobrescrita com o nome de quem a criou.
+    const vUsuario = usuarioAtual;
     const vHorario = editing ? (editing.horario||'dia_todo') : 'dia_todo';
     const saveLabel = editing ? 'Salvar alterações' : 'Salvar reserva';
 
@@ -496,7 +513,11 @@ function buildModal(showForm) {
 
     html+=`<div class="add-form">
       <div class="add-form-title">${formTitle}</div>
-      <div class="field"><label>Quem está fazendo isso</label><input id="f-usuario" type="text" placeholder="Seu nome" value="${vUsuario}"/></div>
+      <div class="field">
+        <label>Quem está fazendo isso</label>
+        <input id="f-usuario" type="text" placeholder="Seu nome" value="${vUsuario}"/>
+        <div class="horario-hint">Este é o seu nome — identifica quem está cadastrando/editando agora, não quem criou a reserva.</div>
+      </div>
       <div class="field"><label>Nome / pessoas que vão</label><input id="f-nome" type="text" placeholder="Ex: João, Maria" value="${vNome}"/></div>
       <div class="field"><label>Destino</label><input id="f-dest" type="text" placeholder="Ex: Sobral" value="${vDest}"/></div>
       <div class="field">
@@ -561,7 +582,7 @@ async function saveEntry() {
   const obs=document.getElementById('f-obs').value.trim();
   const horario=getHorarioValue();
   let ok=true;
-  if(!usuario){document.getElementById('f-usuario').classList.add('err');ok=false;}
+  if(!usuario || isPlaceholderName(usuario)){document.getElementById('f-usuario').classList.add('err');ok=false;}
   if(!nome){document.getElementById('f-nome').classList.add('err');ok=false;}
   if(!destino){document.getElementById('f-dest').classList.add('err');ok=false;}
   if(!ok) return;
@@ -572,7 +593,10 @@ async function saveEntry() {
   try{
     if(isEditing){
       const id=modalState.editingId;
-      await api(`reservas?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({nome,destino,obs,usuario,horario})});
+      // Não sobrescrevemos o campo "usuario" (quem cadastrou originalmente a reserva) ao
+      // editar — isso preserva o dono original e evita que uma edição "roube" a identidade
+      // exibida em "Reservado por". Quem editou fica registrado apenas na auditoria.
+      await api(`reservas?id=eq.${id}`,{method:'PATCH',body:JSON.stringify({nome,destino,obs,horario})});
       await logAuditoria('edicao',{veiculo:modalState.vid,data:modalState.key,nome,destino,obs,id,_feito_por:usuario});
       modalState.editingId=null;
     } else {
@@ -721,7 +745,7 @@ async function renderAudit() {
   try{
     const rows=await api('auditoria?order=feito_em.desc&limit=500');
     if(!rows||rows.length===0){
-      document.getElementById('audit-container').innerHTML=`<div class="empty-state">Nenhuma ação registrada ainda.<br>Cadastros e exclusões aparecerão aqui.</div>`;
+      document.getElementById('audit-container').innerHTML=`<div class="empty-state">Nenhuma ação registrada ainda.<br>Cadastros, edições e exclusões aparecerão aqui.</div>`;
       return;
     }
     let html='<div class="hist-list">';
@@ -735,16 +759,17 @@ async function renderAudit() {
         const dt=new Date(r.feito_em);
         feitoEm=dt.toLocaleDateString('pt-BR',{day:'2-digit',month:'short',year:'numeric',timeZone:'America/Fortaleza'})+' às '+dt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit',timeZone:'America/Fortaleza'});
       }
-      let badge;
-      if(r.acao==='cadastro') badge=`<span class="audit-badge" style="background:#EAF3DE;color:#3B6D11">Cadastro</span>`;
-      else if(r.acao==='edicao') badge=`<span class="audit-badge" style="background:#FAEEDA;color:#854F0B">Edição</span>`;
-      else badge=`<span class="audit-badge" style="background:#FCEAEA;color:#A32D2D">Exclusão</span>`;
+      let badge, acaoVerbo;
+      if(r.acao==='cadastro'){ badge=`<span class="audit-badge" style="background:#EAF3DE;color:#3B6D11">Cadastro</span>`; acaoVerbo='Cadastrado'; }
+      else if(r.acao==='edicao'){ badge=`<span class="audit-badge" style="background:#FAEEDA;color:#854F0B">Edição</span>`; acaoVerbo='Editado'; }
+      else { badge=`<span class="audit-badge" style="background:#FCEAEA;color:#A32D2D">Exclusão</span>`; acaoVerbo='Excluído'; }
+      const feitoPorLabel = r.feito_por && !isPlaceholderName(r.feito_por) ? r.feito_por : 'Não identificado';
       html+=`<div class="hist-item">
         <div class="hist-dot" style="background:${color}"></div>
         <div style="flex:1;min-width:0">
           <div class="hist-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">${r.nome} → ${r.destino} ${badge}</div>
           <div class="hist-detail">${vLabel} · Viagem: ${dataViagem}${r.obs?' · '+r.obs:''}</div>
-          ${r.feito_por?`<div class="hist-detail">Por: ${r.feito_por}</div>`:''}
+          <div class="hist-detail" style="font-weight:600;color:#555">${acaoVerbo} por ${feitoPorLabel}</div>
         </div>
         <div class="hist-meta"><div class="hist-time" style="text-align:right">${feitoEm||'—'}</div></div>
       </div>`;
