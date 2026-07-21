@@ -60,6 +60,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
 .chip-dest{font-size:9px;font-weight:400;color:#777;max-width:100%;white-space:normal;overflow-wrap:break-word;width:100%;text-align:center;line-height:1.2}
 .chip-dest-f5{color:#3B6D11}
 .chip-dest-fortes{color:#A32D2D}
+.chip-turno{font-size:9px;font-weight:500;border-radius:4px;padding:1px 4px;line-height:1.25;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;width:100%;text-align:center;margin-top:1px}
+.chip-turno-f5{background:#E3EFD3;color:#4A7A22}
+.chip-turno-fortes{background:#F9DADA;color:#9C3535}
+.chip-entry{width:100%;margin-bottom:3px}
+.chip-entry:last-child{margin-bottom:0}
 
 .today-num{background:#1a1a18;color:#fff!important;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600}
 .weekend-label{font-size:8px;color:#bbb;margin-top:1px}
@@ -161,6 +166,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .day-num{font-size:12px}
   .chip{font-size:10px;white-space:normal;line-height:1.25;padding:2px 3px;overflow:visible;text-overflow:clip;word-break:break-word}
   .chip-dest{font-size:9px;white-space:normal;line-height:1.2;overflow:visible;text-overflow:clip;word-break:break-word}
+  .chip-turno{font-size:8px;white-space:normal;overflow:visible;text-overflow:clip;word-break:break-word}
   .legend{display:none}
   .tabs .tab{padding:5px 10px;font-size:12px}
   .horario-row{grid-template-columns:1fr}
@@ -171,6 +177,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
   .day{min-height:80px}
   .chip{font-size:9px}
   .chip-dest{font-size:8px}
+  .chip-turno{font-size:8px}
 }
 </style>
 </head>
@@ -383,15 +390,20 @@ function formatHorario(h){
 }
 
 function horarioChip(h){
-  if(!h||h==='dia_todo') return '';
-  if(h==='manha') return '☀M';
-  if(h==='tarde') return '🌆T';
-  return h.substring(0,5);
+  if(!h||h==='dia_todo') return '🕐 Dia todo';
+  if(h==='manha') return '🌅 Manhã';
+  if(h==='tarde') return '🌇 Tarde';
+  if(h.includes('-')) {
+    const [ini, fim] = h.split('-');
+    return fim ? `⏰ ${ini}-${fim}` : `⏰ ${ini}`;
+  }
+  return `⏰ ${h}`;
 }
 
 function renderCalPanel(vid, rows) {
   const chipClass = vid==='f5'?'chip-f5':'chip-fortes';
   const destClass = vid==='f5'?'chip-dest-f5':'chip-dest-fortes';
+  const turnoClass = vid==='f5'?'chip-turno-f5':'chip-turno-fortes';
   const bookedClass = vid==='f5'?'booked-f5':'booked-fortes';
   const map = groupByDay(rows.filter(r=>r.veiculo===vid));
   const count = rows.filter(r=>r.veiculo===vid).length;
@@ -419,8 +431,11 @@ function renderCalPanel(vid, rows) {
       // com o mesmo primeiro nome (ex: dois "Alessandro") fiquem indistinguíveis no calendário.
       const primeiroNome = e.nome.split('/')[0].trim();
       const destShort = e.destino ? e.destino.split('/')[0].trim() : '';
+      inner+=`<div class="chip-entry">`;
       inner+=`<div class="chip ${chipClass}" title="${e.nome}">${primeiroNome}</div>`;
       if(destShort) inner+=`<div class="chip-dest ${destClass}" title="${e.destino}">📍${destShort}</div>`;
+      inner+=`<div class="chip-turno ${turnoClass}" title="${formatHorario(e.horario)}">${horarioChip(e.horario)}</div>`;
+      inner+=`</div>`;
     });
     if(weekend) inner+=`<div class="weekend-label">${new Date(curYear,curMonth,d).getDay()===6?'Sáb':'Dom'}</div>`;
     html+=`<div class="${cls}" onclick="openDay('${vid}','${key}',${d})">${inner}</div>`;
