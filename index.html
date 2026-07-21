@@ -371,9 +371,24 @@ function invalidateCache(y,m){delete cache[`${y}-${m}`];}
 function dateKey(y,m,d){return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;}
 function isWeekend(y,m,d){const dow=new Date(y,m,d).getDay();return dow===0||dow===6;}
 
+// Ordena os cartões de um mesmo dia pelo período do dia (manhã antes de tarde, etc.),
+// e não pela ordem em que foram cadastrados.
+function horarioSortKey(h){
+  if(!h || h==='dia_todo') return -1; // dia todo cobre o dia inteiro, então aparece primeiro
+  if(h==='manha') return 480;  // representa ~08:00
+  if(h==='tarde') return 780;  // representa ~13:00
+  const inicio = h.split('-')[0];
+  const [hh,mm] = inicio.split(':').map(Number);
+  if(!isNaN(hh)) return hh*60+(mm||0);
+  return 9999;
+}
+
 function groupByDay(rows){
   const map={};
   for(const r of rows){if(!map[r.data])map[r.data]=[];map[r.data].push(r);}
+  for(const k in map){
+    map[k].sort((a,b)=>horarioSortKey(a.horario)-horarioSortKey(b.horario));
+  }
   return map;
 }
 
